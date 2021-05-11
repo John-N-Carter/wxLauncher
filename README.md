@@ -1,0 +1,2 @@
+# wxLauncher
+Tabbed Launch Bar
