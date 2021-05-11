@@ -13,4 +13,4 @@ One of the most useful features is it keeping track of usage and sorting by most
 
 Current problems include the limited ability of setting up tools dragged onto a tab. Icons have to be manually set and other parameters edited. I'm currently using the app and recording errors. This is work in progress.
 
-I have not included a screenshot, an example .uni file or icons, again this is work in progress.
+I have not included a screenshot, an example .ini file or icons, again this is work in progress.
