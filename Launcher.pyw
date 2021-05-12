@@ -824,7 +824,7 @@ class EmptyTabPanel(wx.Panel):
             
 class MyFrame2(wx.Frame): # what do empty tabs looklike
     def __init__(self, root, master, title, pos):
-        super().__init__(None, title= NAME_STRING, pos = pos, style = wx.BORDER_NONE)
+        super().__init__(None, title= CONST.NAME_STRING, pos = pos, style = wx.BORDER_NONE)
         self.Master = master
         self.other = None
         self.RebuildFlag = False
@@ -898,7 +898,7 @@ class MyFrame(wx.Frame):
         self.DontUpdate = False
         self.IsBest = False
         self.Score = False
-        super().__init__(None, title= NAME_STRING, pos = pos, style = wx.BORDER_NONE)
+        super().__init__(None, title= CONST.NAME_STRING, pos = pos, style = wx.BORDER_NONE)
         self.Paths() # check all paths
         self.config = configparser.ConfigParser()
         queryname = os.path.join(CONST.ICONPATH, 'query.bmp')
@@ -976,7 +976,7 @@ class MyFrame(wx.Frame):
             
     def MakePanel(self):
         self.panel =wx.Panel(self, wx.ID_ANY, style = wx.BORDER_NONE)
-        self.butt = wx.Button(self.panel, -1, NAME_STRING, size = ( CONST.myWidth, 20), style = wx.BORDER_NONE)
+        self.butt = wx.Button(self.panel, -1, CONST.NAME_STRING, size = ( CONST.myWidth, 20), style = wx.BORDER_NONE)
         self.butt.SetBackgroundColour('black')
         self.butt.SetForegroundColour('white')
         self.Bind(wx.EVT_BUTTON,  self.Vanish, self.butt)
@@ -1243,6 +1243,7 @@ class MyFrame(wx.Frame):
         self.Thaw()
             
     def NewIcon(self, a, button = None): # a is placeholder for event stuff
+        # change how icons are named
         wc = 'Bitmap files (.bmp)|.bmp|PNG Files (.png)|.png' # format problem
         style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST
         with wx.FileDialog(self, 'Open Bitmap File', style = style, defaultDir = './icons') as fileDialog:
@@ -1250,7 +1251,7 @@ class MyFrame(wx.Frame):
                 return     # the user changed their mind
             icon = fileDialog.GetPath()
             junk, exc = os.path.splitext(icon)
-            newname = f'{button.Section}.{button.Name}{exc}'
+            newname = f'{button.Section}__{button.Name}{exc}'
             newpath = os.path.join(CONST.ICONPATH, newname)
             if not os.path.exists(newpath):
                 shutil.copy(icon, newpath)
@@ -1550,7 +1551,7 @@ def gogui():
     title='Launcher'
     wx.InitAllImageHandlers()
     app = wx.App()
-    frm1 = MyFrame(app, NAME_STRING, (CONST.myPosition, 0)) # main gui
+    frm1 = MyFrame(app, CONST.NAME_STRING, (CONST.myPosition, 0)) # main gui
     frm1.Layout()
     frm2 = MyFrame2(app, frm1, 'Spare', (CONST.myPosition, 0)) # dummy gui
     frm2.Layout()
@@ -1560,29 +1561,27 @@ def gogui():
     app.MainLoop()
     
 if __name__ == '__main__': # tidy this up
-    name = sys.argv[-1]
+    print(sys.argv)
+    name = sys.argv[0]
     name = os.path.abspath(name)
-    path, name = os.path.split(name)
+    localpath, name = os.path.split(name)
     #
-    # over wrie constants with local path
+    # over write constants with local path
     #
-    INIFILE = 'launcher.ini'
-    CONST.ICONPATH = os.path.join(path, 'icons') # 'H:\\Computers\\PythonTools\\Launcher\\icons'
+    CONST.ICON_PATH = CONST.ICONPATH = os.path.join(localpath, CONST.ICONPATH) # 'H:\\Computers\\PythonTools\\Launcher\\icons'
     #
-    CONST.ICON_PATH = CONST.ICONPATH # 'H:\\Computers\\PythonTools\\Launcher\\icons'
-    INI_FILE = INIFILE # 'launcher.ini'
-    CONST.FULL_INI_PATH = os.path.join(path, INI_FILE) #'H:\\Computers\\PythonTools\\Launcher\\' + INI_FILE
+    CONST.FULL_INI_PATH = os.path.join(localpath, CONST.INIFILE) #'H:\\Computers\\PythonTools\\Launcher\\' + INI_FILE
     #
-    PICLKEFILE = CONST.FULL_INI_PATH.replace('.ini', '.pickle')
+    CONST.PICLKEFILE = CONST.FULL_INI_PATH.replace('.ini', '.pickle')
     #
-    if 'PythonTools' in CONST.FULL_INI_PATH:
-        NAME_STRING = 'wxLauncher - Development'
+    if 'PythonTools' in CONST.FULL_INI_PATH: # may require more general test
+        CONST.NAME_STRING = 'wxLauncher - Development'
     else:
-        NAME_STRING = 'wxLauncher'
+        CONST.NAME_STRING = CONST.NAME_STRING
     ExitFlag = None
     gogui()
     if ExitFlag:
-        os.execl(sys.executable, sys.executable, *sys.argv) # This works as equired, taken from internet
+        os.execl(sys.executable, sys.executable, *sys.argv) # This works as required, taken from internet
 
 
 
