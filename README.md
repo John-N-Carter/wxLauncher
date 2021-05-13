@@ -1,6 +1,8 @@
 # wxLauncher
 Tabbed Launch Bar (Not to be confused with Lunch Bar)
 
+! [wxLauncher] (wxlauncher.jpg)
+
 For a long time I used Object Dock from Stardock. However it started causing other desktop tools to misbehave so I started to look for an alternative. 
 
 According to Google there are a number of replacements but none were suitable. The best was 'RocketDock', however I could never get it to behave as I wanted.
