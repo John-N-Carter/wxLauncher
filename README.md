@@ -1,7 +1,7 @@
 # wxLauncher
 Tabbed Launch Bar (Not to be confused with Lunch Bar)
 
-![wxLauncher](wxlauncher.jpg)
+![wxLauncher: Showing Frequent tab](wxlauncher.jpg)
 
 For a long time I used Object Dock from Stardock. However it started causing other desktop tools to misbehave so I started to look for an alternative. 
 
