@@ -15,6 +15,6 @@ One of the most useful features is in keeping track of usage and sorting by most
 
 Current problems include the limited ability of setting up tools dragged onto a tab. Icons have to be manually set and other parameters edited. I'm currently using the app and recording errors. This is work in progress. Aditionally it does not always save status after changes, do a manual close before shutting down your computer.
 
-I have added a .ini file, appropriate icons and some short cuts. I found that when links were dropped from the desktop they were oftem moved or deleted (by me). I started using a shortcuts directory to preserve links. This must be manually setup, as are icons.
+I have added a .ini file, appropriate icons and some short cuts. I found that when links were dropped from the desktop they were oftem moved or deleted (by me). I started using a shortcuts directory to preserve links. This must be manually setup. Icons are searched for, in links otherwise look for icon of same name
 
 As the program stands there is a good chance of it working out of the box but the .ini file should reflect your computer not mine.
