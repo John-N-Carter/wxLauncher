@@ -24,7 +24,25 @@ ICONPATH = 'icons'
 #
 SHORTCUTPATH = 'Shortcuts'
 #
+QUERYNAME = 'query.bmp'
 #
+name = sys.argv[0]
+name = os.path.abspath(name)
+localpath, name = os.path.split(name)
+#
+# over write constants with local path
+#
+ICON_PATH = ICONPATH = os.path.join(localpath, ICONPATH) # 'H:\\Computers\\PythonTools\\Launcher\\icons'
+#
+FULL_INI_PATH = os.path.join(localpath, INIFILE) #'H:\\Computers\\PythonTools\\Launcher\\' + INI_FILE
+#
+PICLKEFILE = FULL_INI_PATH.replace('.ini', '.pickle')
+#
+QUERYNAME = os.path.join(ICON_PATH, QUERYNAME) # default icon
+#
+SHORTCUTPATH = os.path.join(localpath, SHORTCUTPATH)
+#
+
 #
 NAME_STRING = 'wxLauncher'
 EXPLORER = None

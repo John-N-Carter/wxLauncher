@@ -13,11 +13,39 @@
 
 # wxpython removed using conda and reinstalled using pip to get version 4.1
 
-""" Version 3.2, add clock and list of scores """
+"""
+proc testICO(value : seq[int8]): ImageType =
+    # tests: 00 00 01 00
+    return if value[0] == 0 and value[1] == 0 and value[2] == 1 and value[3] == 0: ICO else: Other
+
+how to test for icon in some strange language
+https://github.com/achesak/nim-imghdr/blob/master/imghdr.nim
+
+imghdr source
+https://github.com/python/cpython/blob/main/Lib/imghdr.py
+
+
+Version 3.2, add clock and list of scores
 
 # version 4
+"""
 
 from imports import *
+import constants as CONST
+import code as CODE
+from button import *
+
+
+import imghdr
+#
+def test_icon(h, f):
+    if h.startswith(b'\x00\x00\x01\x00'):
+        return 'icon'
+    return None
+
+imghdr.tests.append(test_icon)
+
+
 
 class DropNewButton(wx.FileDropTarget):
 
@@ -182,8 +210,11 @@ class CommandDialog(wx.Dialog):
         # command strings
         self.NumStrings = int(self.Button.Lines)
         self.ButtonData = []
-        cmdData = button.Command
-        cmdData = eval(cmdData)
+        cmdData = str(self.Button.Command)
+        try:
+            cmdData = eval(cmdData)
+        except:
+            sys.exit(F'cmdData {cmdData}')
         for i in range(self.NumStrings): 
             hSizer  = wx.BoxSizer(wx.HORIZONTAL)
             if i == 0:
@@ -206,11 +237,9 @@ class CommandDialog(wx.Dialog):
         # binarty flags
         self.Control = {}
         for Key in CONST.binaryKeys: # GetValue
-            #~ value = self.Button.allOptions[Key]
             value = getattr(self.Button, Key, None)
             value = CODE.str2bool(value)
             #controled error here
-            print('@@@ binary', Key, value)
             textlabel = wx.StaticText(self, -1, Key, size = (150, 25))
             textlabel.SetFont(font)
             radioButton = wx.CheckBox(self, style = wx.CHK_2STATE)
@@ -271,7 +300,6 @@ class CommandDialog(wx.Dialog):
         self.Master.SetFocus()
         
     def Lines(self, a):
-        #~ print('Lines')
         lines = int(self.Button.Lines)
         lines += 1
         self.Button.Lines = str(lines)
@@ -280,7 +308,6 @@ class CommandDialog(wx.Dialog):
         self.Master.SetFocus()
         
     def CancelIt(self, a):
-        #~ print('Cancel')
         self.Master.Result = 'F'
         self.Destroy()
         self.Master.SetFocus()
@@ -521,15 +548,15 @@ class TabChoseDialog(wx.Dialog):
         
 class EditDialog(wx.Dialog):
     def __init__(self, button, master, edit = None): # show only
-        #~ print('*' * 20, 'Enter Edit Dialog')
         self.Master = master
+
         self.Edit = edit
         super().__init__(None, -1, title = f'Show Button {button.Name}', size = (500, 500))
         font12 = wx.Font(wx.FontInfo(12).Bold())
         font15 = wx.Font(wx.FontInfo(15).Bold())
-        self.Button = button 
+        self.Button = button
         
-        button.dump(label = 'Edit Dialog/Show')
+        #~ button.dump(label = 'Edit Dialog/Show')
         okbutton = wx.Button(self, wx.ID_OK, 'ok')
         okbutton.Bind(wx.EVT_BUTTON, self.DoIt)
 
@@ -542,11 +569,16 @@ class EditDialog(wx.Dialog):
         tabSizer = wx.GridBagSizer()       
         self.Control ={}
         row = 0
+        #~ self.Button.dump('Buttton to view')
         for Key in CONST.textKeys: #GetValue
-            value = self.Button.allOptions[Key]
+            value = getattr(self.Button, Key, None)
+            value = str(value)
             if Key == 'Command':
                 v = eval(value)
-                v = ' '.join(v)
+                try:
+                    v = ' '.join(v)
+                except:
+                    sys.exit('Fatal Error needs work')
                 value = v
             textlabel = wx.StaticText(self, -1, Key, size = (150, 25))
             textlabel.SetFont(font12)
@@ -558,7 +590,7 @@ class EditDialog(wx.Dialog):
             tabSizer.Add(buttondataT, pos = (row, 2), flag = wx.ALIGN_LEFT)
             row += 1
         for Key in CONST.binaryKeys: # GetValue
-            value = CODE.str2bool(self.Button.allOptions[Key])
+            value = CODE.str2bool(getattr(self.Button, Key, None))
             textlabel = wx.StaticText(self, -1, Key, size = (150, 25))
             textlabel.SetFont(font12)
             radioButton = wx.CheckBox(self, label = Key, style = wx.CHK_2STATE)
@@ -570,7 +602,7 @@ class EditDialog(wx.Dialog):
             tabSizer.Add(radioButton, pos = (row, 2), flag = wx.ALIGN_LEFT)
             row += 1
         for Key in CONST.radioKeys: # getselection int, getstring
-            value = self.Button.allOptions[Key]
+            value = getattr(self.Button, Key, None)
             textlabelT = wx.StaticText(self, -1, Key, size = (150, 25))
             textlabelT.SetFont(font12)
             lbList = CONST.radioKeys[Key]
@@ -591,7 +623,6 @@ class EditDialog(wx.Dialog):
         bigSizer.Add(Sizer)
         self.SetSizer(bigSizer)
         bigSizer.Fit(self)
-        print('*' * 20, 'Leave Edit Dialog', self.Edit)
         
     def DoIt(self, a):
         self.Destroy()
@@ -767,6 +798,7 @@ class PopMenuTab(wx.Menu):
             self.AppendSeparator()
             #
         sysMenu = wx.Menu()
+        self.MenuItem('Very Fast Exit (No update .ini)', self.Master.FastFinish, Menu = sysMenu)
         self.MenuItem('Fast Exit', self.Master.Finish, Menu = sysMenu)
         self.MenuItem('Edit .ini file', self.Master.EditIni, Menu = sysMenu)
         self.MenuItem('Update', self.Master.Update, Menu = sysMenu)
@@ -888,8 +920,6 @@ class MyFrame(wx.Frame):
         self.AllButtons = []
         self.AllTabs = {}
         self.scriptPath = ''
-        self.ImagePath = ''
-        self.ShortcutPath = ''
         self.PageIndex = {}
         self.PagePanel = {}
         self.CurrentSelection = 0
@@ -901,8 +931,7 @@ class MyFrame(wx.Frame):
         super().__init__(None, title= CONST.NAME_STRING, pos = pos, style = wx.BORDER_NONE)
         self.Paths() # check all paths
         self.config = configparser.ConfigParser()
-        queryname = os.path.join(CONST.ICONPATH, 'query.bmp')
-        IconData = wx.Image(queryname, wx.BITMAP_TYPE_BMP)  # should cache this
+        IconData = wx.Image(CONST.QUERYNAME, wx.BITMAP_TYPE_BMP)  # should cache this
         if IconData.GetWidth() != 48:
             IconData.Rescale(48, 48, quality = wx.IMAGE_QUALITY_HIGH)
         self.IconData = IconData.ConvertToBitmap()
@@ -937,7 +966,7 @@ class MyFrame(wx.Frame):
         pass
             
     def setup(self, notebook = None): # protect againist bad section
-        fp = open(os.path.join(self.scriptPath, CONST.INIFILE), 'r')
+        fp = open(CONST.FULL_INI_PATH, 'r')
         self.config.read_file(fp)
         fp.close()
         try:
@@ -962,14 +991,11 @@ class MyFrame(wx.Frame):
             name =self.config[section][CONST.NAME]
             xb = Button(self, name, section, self.config)
             self.AllButtons.append(xb)
-            #~ drop = self.config[section][CONST.DROP]
             worst = self.config[section]['worst']
-            #~ xb.Drop = CODE.str2bool(drop)
             xb.Worst =CODE.str2bool(worst)
-            xb.makeIcon(self.ImagePath)
+            xb.makeIcon(CONST.ICON_PATH)
             xb.makeCommand(self)
             xb.makeContext(self)
-            xb.allOptions = allOptions
             xb.allKeys = sorted(allKeys)
             xb.TabInstance = self.AllTabs[xb.Tab]
             self.AllTabs[xb.Tab].addButton(xb)
@@ -1059,9 +1085,6 @@ class MyFrame(wx.Frame):
         if scriptPath == '':
             scriptPath = '.\\'
         self.scriptPath = scriptPath
-        self.ImagePath = os.path.join(scriptPath, CONST.ICONPATH)
-        self.ShortcutPath = os.path.join(scriptPath, CONST.SHORTCUTPATH)
-        print('Paths', self.scriptPath, self.ImagePath, self.ShortcutPath)
         
     def Run(self, a, open = None):
         self.open = open
@@ -1104,54 +1127,141 @@ class MyFrame(wx.Frame):
             self.Edited = True
             
     def  NewButton(self, a, tab = None, filename = None): # tab is object, a is event place holder, tab.Name is a name
+        from icoextract import IconExtractor
+        import pylnk3
+        def findIcon(a, default = CONST.QUERYNAME):
+            found = glob.glob(a)
+            for fo in found:
+                if imghdr.what(fo):
+                    return fo
+            return default
         if tab is None:
-            self.ErrorMessage('Really Bad error', 'Create New Buttton')
+            self.ErrorMessage('Really Bad error, no Tab', 'Create New Buttton')
             self.FinishOK()
             return
-        fullName = filename
-        thisTab = self.AllTabs[tab]
-        if fullName is None:
-            newName = '0' + CODE.get_random_string(5) 
-            newPath = None
-            newExt = '.lnk'
-        else:
-            newPath, newName, newExt = CODE.getFileName(filename)
-            newFileName = os.path.join(self.ShortcutPath, newName + newExt)
-        if newExt in ['.lnk', '.bat', '.URL']: 
+        if filename is None:
+            self.ErrorMessage('Really Bad error, no Name', 'Create New Buttton')
+            self.FinishOK()
+            return
+        fullName = os.path.abspath(filename)
+        newPath, newName, newExt = CODE.getFileName(fullName)
+        try:
+            thisTab = self.AllTabs[tab]
+        except:
+            self.ErrorMessage(F'Really Bad error, unknown Tab {tab}', 'Create New Buttton')
+            self.FinishOK()
+            return
+        newSection = f'{thisTab.Name}.{newName}'
+        newGroup = thisTab.Name
+        try:
+            self.config.add_section(newSection) #Must be removed if error
+        except:
+            self.WarningMessage(F'Section or command {newSwction} exists', 'Create New Buttton')
+            return #Return with out doing anything
+        newFileName = os.path.join(CONST.SHORTCUTPATH, newName + newExt)
+        iconName = os.path.join(CONST.ICON_PATH, F'{newName}_{thisTab.Name}.ico')
+        theIcon = CONST.QUERYNAME # default icon
+        newExt = newExt.lower() # windows names are all case independant.
+        if newExt in ['.lnk', '.bat', '.url']: 
             newType = 'LINK'
             if os.path.exists(newFileName):
                 newCommand = f"['{newFileName}']"
             else:
                 shutil.copy(fullName, newFileName)
                 newCommand = f"['{newFileName}']"
-            print('LINK newName', newName, newFileName)
+            if newExt == '.lnk': # parse link
+                newCommand = f"['{newFileName}']"
+                parseLnk = pylnk3.parse(fullName)
+                iconFile = parseLnk.icon
+                iconIndex = parseLnk.icon_index
+                temp, iconExt = os.path.splitext(iconFile)
+                if imghdr.what(iconFile): # imghdr does not support .ico files, yet. Extension added
+                    Name, temp = os.path.splitext(iconName)
+                    iconName = Name + iconExt
+                    if not os.path.exists(iconName):
+                        shutil.copy(iconFile, iconName)
+                else:
+                    extractor = IconExtractor(iconFile)
+                    extractor.export_icon(iconName, iconIndex)
+                theIcon = iconName
+            elif newExt == '.url': # parse url link
+                urlParser = configparser.ConfigParser()
+                with open(fullName, 'r') as urlFile:
+                    urlParser.read_file(urlFile)
+                url = urlParser['InternetShortcut']['url']
+                newCommand = f"['{url}']"
+                try: # get files from .URL file, assume exception if not there.
+                    iconIndex =  urlParser['InternetShortcut']['IconIndex']
+                    iconFile =  urlParser['InternetShortcut']['IconFile'].lower()
+                except:
+                    iconFile = theIcon
+                    iconIndex = 0
+                    self.config.remove_section(newSection)
+                    self.WarningMessage(F'Icon informatio Not Found in {urlFile}', 'Create New Buttton')
+
+
+                temp, iconExt = os.path.splitext(iconFile)
+                if imghdr.what(iconFile): # imghdr does not support .ico files, yet
+                    Name, temp = os.path.splitext(iconName)
+                    iconName = Name + iconExt
+                    if not os.path.exists(iconName):
+                        shutil.copy(iconFile, iconName)
+                else:
+                    extractor = IconExtractor(iconFile)
+                    extractor.export_icon(iconName, iconIndex)
+                theIcon = iconName
+                try:
+                    temp = 0
+                except:
+                    self.config.remove_section(newSection)
+                    self.WarningMessage(F'Icon {iconFile} Not Found ', 'Create New Buttton')
+            elif newEXT == '.bat':  #ignore .bat, eventually look for NAME.ico in same place
+                newCommand = F'[{fullName}]'
+                match = os.path.join(newPath, newName + '.*')
+                theIcon = findIcon(match)
+            else: # should be error trap
+                self.config.remove_section(newSection)
+                self.WarningMessage(F'Unknown Link {newEXt}', 'Create New Buttton')
         elif newExt in ['.exe']: 
             newType = 'EXEC'
             newCommand = f"['{fullName}']"
+            try:
+                extractor = IconExtractor(fullName)
+                extractor.export_icon(iconName, 0) # alway take first
+                theIcon = iconName
+            except:
+                match = os.path.join(newPath, newName + '.*') #Look for <name>.ico as default. Could do once at begining
+                theIcon = findIcon(match)
+            
         elif newExt in ['.py', '.pyw', '.pyc']: 
             newType = 'PYTHON'
             newCommand = f"['{fullName}']"
+            match = os.path.join(newPath, newName + '.*') #Look for <name>.ico.
+            theIcon = findIcon(match)
         elif 'http:' or 'https:' in fullName:
             newType = 'LINK'
             newCommand = f"['{fullName}']"
+            match = os.path.join(newPath, newName + '.*') #Look for <name>.ico.
+            theIcon = findIcon(match)
         else:
             self.WarningMessage(f'Dont Understand dropped extension - {fullname}', 'Create New Button')
+            self.config.remove_section(newSection)
             return
-        newSection = f'{thisTab.Name}.{newName}.{CODE.get_random_string(5)}'
+        newSection = f'{thisTab.Name}.{newName}'
         newGroup = thisTab.Name
-        self.config.add_section(newSection)
         self.config.set(newSection, 'name', newName)
         self.config.set(newSection, 'tab', newGroup)
         b = Button(self, newName, newSection, self.config)
         self.AllButtons.append(b) # used to count button access.
         b.Tab = thisTab.Name
-        b.Icon = 'batman.png'
+        b.TabInstance = thisTab
+        b.Icon = theIcon
         b.makeIcon()
         b.Type = newType
-        b.Command = newCommand 
+        b.Command = newCommand
+        #~ b.dump('Editing this')
         b.makeCommand(self)
         b.makeContext(self)
-        b.TabInstance = thisTab
         items = self.config.items(newSection) # all values as tuple pair.
         items = [(x[0].capitalize(), x[1]) for x in items]
         b.allOptions = CODE.lt2d(items) # as dictionary
@@ -1308,10 +1418,8 @@ class MyFrame(wx.Frame):
         Button = button
         while True:
             self.Result = None
-            #~ print('Result before', self.Result)
             commandbox =CommandDialog(self, Button)
             result = commandbox.ShowModal()
-            #~ print('Result after', self.Result)
             if self.Result == 'L':
                 continue
             elif self.Result == 'F':
@@ -1319,7 +1427,6 @@ class MyFrame(wx.Frame):
             else:
                 break
         # read result to build updated command, (radioResult, commandResult, flagResult, countResult)
-        #~ print(f'Newcommand {self.Result}')
         Button.Type = self.Result[0]
         #
         Button.Comand = self.Result[1]
@@ -1376,38 +1483,30 @@ class MyFrame(wx.Frame):
         self.Edited = True # This is crucial
             
     def ShowProperty(self, button = None, editprop = None):
-        print(f'----{button} {editprop}')
         editbox = EditDialog(button, self, edit = editprop)
         result = editbox.ShowModal()
         editbox.Destroy()
         self.Edited = False
         
     def EditProperty(self, button = None, editprop = None):
-        print('*' * 30, 'Before edit')
-        print(f'>>>>{button} {editprop}')
         editbox = EditDialog(button, self, edit = editprop)
         result = editbox.ShowModal()
         editbox.Destroy()
-        print('*' * 30, 'After edit')
-        print(self.Result)
-        button.dump('Before Update')
+        #~ button.dump('Before Update')
         self.Edited = False
         if self.Result is not None:
             for k, v in self.Result.items():
                 setattr(button, k, v)
             button.Count = int(button.Count)
-            button.dump('After Update')
+            #~ button.dump('After Update')
             self.Edited = True
         t = button.TabInstance
         t.Hide()
         t.Populate(self)
         t.Show()
-        print('b.s', button.Section)
         self.EditConfig(button, button.Section)
-        print('*' * 30, 'After update')
             
     def EditConfig(self, button, section):
-        print(f'allOptions {allOptions}')
         for k in button.allOptions:
             v = getattr(button, k)
             self.config.set(section, k.lower(), str(v))
@@ -1419,7 +1518,6 @@ class MyFrame(wx.Frame):
             return
         filename = os.path.join(self.scriptPath, CONST.INIFILE)
         backupfile = filename.replace('.ini', '.ini.backup')
-        #~ print(f'Backup from {filename} to {backupfile}')
         shutil.copy(filename, backupfile)
         with open(filename, 'w') as configfile:
             self.config.write(configfile)
@@ -1429,6 +1527,10 @@ class MyFrame(wx.Frame):
         global ExitFlag
         ExitFlag = True
         self.Finish(None)
+        
+    def FastFinish(self, a): #No configuration update
+        self.other.Close() # must close spare frame first.
+        self.Close()
         
     def Finish(self, a):
         if self.Edited:
@@ -1483,7 +1585,6 @@ class MyFrame(wx.Frame):
         
            
     def Command(self, *a, **b): # b is a dictionary, b[CONST.PROG] should be a list, a is some event data
-        print(f'Command {b}')
         isDrop = b.get('drop', False)
         pid = None
         button = b[CONST.BUTTON]
@@ -1491,13 +1592,9 @@ class MyFrame(wx.Frame):
         self.config.set(button.Section, 'count', str(button.Count))
         self.Edited = True
         prog = b[CONST.PROG]
-        #~ if 
         El = CODE.str2bool(button.Elevation)
-        #~ print(f'Button {button.Name} = {El} {type(El)}')
         if El:
-            #~ print(f'Button {button.Name} = {button.Elevation} True')
             c = prog[0]
-            #~ print(f'Run {c} elevated')
             ret =ctypes.windll.shell32.ShellExecuteW(None, "runas", c, '', None, 1)
         else:
             if isDrop:
@@ -1537,12 +1634,7 @@ class MyFrame(wx.Frame):
 
         #
         cmd = ' '.join(prog)
-        print(f'Startfile {cmd}')
         os.startfile(cmd)
-        #~ try:
-            #~ os.startfile(cmd)
-        #~ except:
-            #~ self.WarningMessage(f'os.startfile failed  {cmd}', f'Executing Link command')
         self.Vanish(None)
         
     
@@ -1561,7 +1653,6 @@ def gogui():
     app.MainLoop()
     
 if __name__ == '__main__': # tidy this up
-    print(sys.argv)
     name = sys.argv[0]
     name = os.path.abspath(name)
     localpath, name = os.path.split(name)
@@ -1573,6 +1664,10 @@ if __name__ == '__main__': # tidy this up
     CONST.FULL_INI_PATH = os.path.join(localpath, CONST.INIFILE) #'H:\\Computers\\PythonTools\\Launcher\\' + INI_FILE
     #
     CONST.PICLKEFILE = CONST.FULL_INI_PATH.replace('.ini', '.pickle')
+    #
+    CONST.QUERYNAME = os.path.join(CONST.ICON_PATH, CONST.QUERYNAME) # default icon
+    #
+    CONST.SHORTCUTPATH = os.path.join(localpath, CONST.SHORTCUTPATH)
     #
     if 'PythonTools' in CONST.FULL_INI_PATH: # may require more general test
         CONST.NAME_STRING = 'wxLauncher - Development'

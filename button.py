@@ -1,8 +1,12 @@
 #! python3
 from imports import *
+import constants as CONST
+import code as CODE
+
 
 class Button():
     """ Class to hold all button information """
+    """ Bug with circular imports """
     
     IconCache = {} # take cache out of this class and put in myFrame
     
@@ -37,6 +41,7 @@ class Button():
         self.Drop = self.Config[self.Section][CONST.DROP]
         self.Drop = CODE.str2bool(self.Drop)
         self.Elevation = CODE.str2bool(self.Elevation)
+        self.Iconcode = None
             
         
     def dump(self, label = None):
@@ -96,25 +101,25 @@ class Button():
         command = self.Command
         command = command.replace('\\', '/')
         try:
-            command = eval(command)
+            self.Command = eval(command)
         except:
-            self.Master.ErrorMessage(f'Badly formatter command {command}',  'Command error')
-            self.FinishOK()
+            self.Master.ErrorMessage(f'Badly formatter command {command}',  'Make Command for Buttton')
+            self.Master.FinishOK()
         if self.Type == 'INTERNAL': # must match ini file INTERNAL
             self.CommandData = command
-        elif self.Type == 'LINK': # LINK or location
-            self.CommandData = lambda a, x = command: self.Master.LinkCommand(a, program = x, Button = self)
+        elif self.Type == 'LINK': # Link, Internet Link or Location
+            self.CommandData = lambda a, x = self.Command: self.Master.LinkCommand(a, program = x, Button = self)
         elif self.Type == 'EXEC': # EXECutable
-            self.CommandData = lambda a, x = command : self.Master.Command(a, program = x, Button = self)
+            self.CommandData = lambda a, x = self.Command : self.Master.Command(a, program = x, Button = self)
         elif self.Type == 'PYTHON': # PYTHON
-            command.insert(0, 'C:/programs/Apps/pyw.exe')
-            self.CommandData = lambda a, x = command : self.Master.PyCommand(a, program = x, Button = self)
+            self.Command.insert(0, 'C:/programs/Apps/pyw.exe')
+            self.CommandData = lambda a, x = self.Command : self.Master.PyCommand(a, program = x, Button = self)
         elif self.Type is None:
             self.Command = None
-            self.Master.WarningMessage(f'Bad command {command}', 'Just bad!')
+            self.Master.WarningMessage(f'No Command: {command}', 'Make Command for Buttton')
         else:
             self.Comand = None
-            self.Master.ErrorMessage( f'Really bad command {command}', 'Really bad!')
+            self.Master.ErrorMessage( f'Unknown Command {command}', 'Make Command for Buttton')
             self.Master.Finish()
             
 class ButtonFileDrop(wx.FileDropTarget):
@@ -125,7 +130,7 @@ class ButtonFileDrop(wx.FileDropTarget):
         super(ButtonFileDrop, self).__init__()
 
     def OnDropFiles(self, x, y, filenames):
-        print(f'Dropped {filenames[0]} of [{len(filenames)}] {self.Button.Name} {self.Button.Tab}')
+        #~ print(f'Dropped {filenames[0]} of [{len(filenames)}] {self.Button.Name} {self.Button.Tab}')
         cd = eval(self.Button.Command) # drop only uses first entry
         filenames.insert(0, cd[0]) # must be better way
         self.Master.Command(None, program = filenames, Button = self.Button, isDrop = True)
@@ -176,7 +181,6 @@ class Tab:
                 self.iconName[i].SetLabel(f'{button.Name}')
                 
             self.iconImage[i].SetBitmapLabel(button.IconData)
-            #~ print(f'Drop on {button.Drop}  {type(button.Drop)}')
             if button.Drop:
                 font = wx.Font(wx.FontInfo(10).Bold())
                 self.iconName[i].SetFont(font)
