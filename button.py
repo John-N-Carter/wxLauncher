@@ -1,4 +1,7 @@
-#! python3
+#!/usr/bin/env python3.10
+#
+# Button and tab code for launcher.
+#
 from imports import *
 import constants as CONST
 import code as CODE
@@ -7,13 +10,12 @@ import code as CODE
 class Button():
     """ Class to hold all button information """
     """ Bug with circular imports """
-    
+
     IconCache = {} # take cache out of this class and put in myFrame
-    
+
     def __init__(self, master, name, section, config):
         self.Master = master
         self.Name = name
-        self.Section = section
         self.Config = config
         self.IconData = None
         self.CommandData = None
@@ -30,6 +32,7 @@ class Button():
         self.Position = None
         self.Worst = None
         self.Lines = 1
+        self.Section = section
         self.Tab = self.Config[self.Section][CONST.TAB]
         self.Icon = self.Config[self.Section][CONST.ICON]
         self.Command = self.Config[self.Section][CONST.COMMAND]
@@ -42,8 +45,12 @@ class Button():
         self.Drop = CODE.str2bool(self.Drop)
         self.Elevation = CODE.str2bool(self.Elevation)
         self.Iconcode = None
-            
-        
+        self.DefaultArgument = ''
+        self.Working = 'H:/'
+        self.Working = self.Config[self.Section][CONST.WORKING]
+        self.Defaultargument = self.Config[self.Section][CONST.DEFAULTARGUMENT] #  convert string
+
+
     def dump(self, label = None):
         print( 'Button Dump', label)
         print( 'Name',self.Name)
@@ -56,10 +63,12 @@ class Button():
         print( 'Tab Instance Name', self.TabInstance.Name)
         print( 'Can Drop On', self.Drop)
         print( 'Elevation', self.Elevation)
+        print( 'Working', self.Working)
+        print( 'Default Argument', self.Defaultargument)
 
     def __repr__(self):
         return f'{self.Name} + {self.Section}'
-        
+
     def makeIcon(self, path = CONST.ICONPATH):
         iconType = None
         if '.png' in self.Icon:
@@ -86,10 +95,10 @@ class Button():
             self.Icon = 'Unknown'
             self.Master.ErrorMessage(f'icon problems - {Icon} with {self.Name}')
         self.IconCache[Icon] = self.IconData
-        
+
     def makeContext(self, Master):
         self.ButtonContextData = lambda a, x = self : self.Master.ButtonContextMenu(a, Button = x)
-      
+
     def makeCommand(self, Master):
         #
         # command function take two parametrs so needs a leading placeholder.
@@ -99,7 +108,10 @@ class Button():
         self.ValidTypes = self.Config[CONST.SETUP]['Types']
         self.ValidTypes = eval(self.ValidTypes)
         command = self.Command
-        command = command.replace('\\', '/')
+        if type(command) == list:
+            command = str([x.replace('\\', '/') for x in command])
+        else:
+            command = command.replace('\\', '/')
         try:
             self.Command = eval(command)
         except:
@@ -107,13 +119,8 @@ class Button():
             self.Master.FinishOK()
         if self.Type == 'INTERNAL': # must match ini file INTERNAL
             self.CommandData = command
-        elif self.Type == 'LINK': # Link, Internet Link or Location
-            self.CommandData = lambda a, x = self.Command: self.Master.LinkCommand(a, program = x, Button = self)
-        elif self.Type == 'EXEC': # EXECutable
-            self.CommandData = lambda a, x = self.Command : self.Master.Command(a, program = x, Button = self)
-        elif self.Type == 'PYTHON': # PYTHON
-            self.Command.insert(0, 'C:/programs/Apps/pyw.exe')
-            self.CommandData = lambda a, x = self.Command : self.Master.PyCommand(a, program = x, Button = self)
+        elif self.Type in ['PYTHON', 'LINK', 'EXEC']: # PYTHON or LINK, EXEC
+            self.CommandData = lambda a, x = self.Command : self.Master.AllCommand(a, program = x, Button = self)
         elif self.Type is None:
             self.Command = None
             self.Master.WarningMessage(f'No Command: {command}', 'Make Command for Buttton')
@@ -121,23 +128,17 @@ class Button():
             self.Comand = None
             self.Master.ErrorMessage( f'Unknown Command {command}', 'Make Command for Buttton')
             self.Master.Finish()
-            
-class ButtonFileDrop(wx.FileDropTarget):
 
+class ButtonFileDrop(wx.FileDropTarget):
     def __init__(self, master, button = None): # needs error traps
         self.Master= master
         self.Button = button
         super(ButtonFileDrop, self).__init__()
-
     def OnDropFiles(self, x, y, filenames):
-        #~ print(f'Dropped {filenames[0]} of [{len(filenames)}] {self.Button.Name} {self.Button.Tab}')
-        cd = eval(self.Button.Command) # drop only uses first entry
-        filenames.insert(0, cd[0]) # must be better way
-        self.Master.Command(None, program = filenames, Button = self.Button, isDrop = True)
+        fileNames = copy.copy(filenames)
+        self.Master.DropOnButton(None, button = self.Button, files = fileNames)
         return False
 
-
-            
 class Tab:
     #
     #  This class will hold all the data about tabs, replacing global variables in myFrame.
@@ -179,18 +180,16 @@ class Tab:
                 self.iconName[i].SetLabel(f'{button.Name} [{cnt}]')
             else:
                 self.iconName[i].SetLabel(f'{button.Name}')
-                
+
             self.iconImage[i].SetBitmapLabel(button.IconData)
             if button.Drop:
-                font = wx.Font(wx.FontInfo(10).Bold())
-                self.iconName[i].SetFont(font)
                 bfd = ButtonFileDrop(master, button = button)
                 self.iconImage[i].SetDropTarget(bfd)
             master.Bind(wx.EVT_BUTTON, button.CommandData, self.iconImage[i])
             master.Bind(wx.EVT_CONTEXT_MENU, button.ButtonContextData, self.iconImage[i])
         master.Refresh()
         return
-                
+
     def Hide(self):
         for i in range(CONST.PER_ROW):
             self.iconName[i].Hide()
@@ -202,7 +201,7 @@ class Tab:
         for i in range(n):
             self.iconName[i].Show()
             self.iconImage[i].Show()
-            
+
 if __name__ == '__main__':
     print('Button test: Run "launcher.pyw"')
 

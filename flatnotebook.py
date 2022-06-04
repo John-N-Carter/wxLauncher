@@ -1,4 +1,5 @@
-#! python3
+#!/usr/bin/env python3.10
+
 # --------------------------------------------------------------------------- #
 # FLATNOTEBOOK Widget wxPython IMPLEMENTATION
 #
@@ -860,9 +861,9 @@ def PaintStraightGradientBox(dc, rect, startColour, endColour, vertical=True):
 
     for i in range(high+1):
 
-        r = startColour.Red() + ((i*rd*100)/high)/100
-        g = startColour.Green() + ((i*gd*100)/high)/100
-        b = startColour.Blue() + ((i*bd*100)/high)/100
+        r = int(startColour.Red() + ((i*rd*100)/high)/100)
+        g = int(startColour.Green() + ((i*gd*100)/high)/100)
+        b = int(startColour.Blue() + ((i*bd*100)/high)/100)
 
         p = wx.Pen(wx.Colour(r, g, b))
         dc.SetPen(p)
@@ -5042,7 +5043,7 @@ class FlatNotebook(wx.Panel):
 
         self._pages.SetPageColour(page, colour)
         #~ sys.exit()
-        
+
     def GetPageColour(self, page):
         pass # placeholder
 

@@ -1,4 +1,4 @@
-#! python3
+#!/usr/bin/env python3.10
 from imports import *
 
 SETUP = 'SETUP'
@@ -16,15 +16,26 @@ COLOUR = 'Colour'
 DROP = 'Drop'
 ELEVATION = 'Elevation'
 LINES = 'Lines'
+WORKING = 'Working'
+DEFAULTARGUMENT = 'Defaultargument'
 #
 MOST_POPULAR = 'Frequent'
 #
 INI_FILE = INIFILE = 'launcher.ini'
 ICONPATH = 'icons'
+ICONCACHE = 'iconcache'
+#
+DEFAULTICONS = 'DefaultIcons'
 #
 SHORTCUTPATH = 'Shortcuts'
 #
 QUERYNAME = 'query.bmp'
+#
+LINKNAME = 'query.ico'
+#
+ICONSEXT = os.path.join(R'C:\Programs\iconsext', 'iconsext.exe') # edit path as appropriate
+if not os.path.exists(ICONSEXT):
+    ICONSEXT = None
 #
 name = sys.argv[0]
 name = os.path.abspath(name)
@@ -38,9 +49,9 @@ FULL_INI_PATH = os.path.join(localpath, INIFILE) #'H:\\Computers\\PythonTools\\L
 #
 PICLKEFILE = FULL_INI_PATH.replace('.ini', '.pickle')
 #
-QUERYNAME = os.path.join(ICON_PATH, QUERYNAME) # default icon
+#~ QUERYNAME = os.path.join(ICON_PATH, QUERYNAME) # default icon
 #
-SHORTCUTPATH = os.path.join(localpath, SHORTCUTPATH)
+#~ SHORTCUTPATH = os.path.join(localpath, SHORTCUTPATH)
 #
 
 #
@@ -53,8 +64,11 @@ myWidth =1650
 myHeight = 104
 #
 SQUARE_500 = (500, 500)
+TEXT_TITLE = (200, 25)
 S_100_25 = (100, 25)
-S_500_25 = (700, 25)
+S_500_25 = (500, 25)
+S_700_25 = (700, 25)
+TEXT_IN = (600, 25)
 #
 PER_ROW = 25
 #
@@ -65,7 +79,12 @@ textKeys = set([# string commands
     'Icon',
     'Tab',
     'Name',
+    'Defaultargument',
+    'Working',
     'Count'])
+plaintextKeys = set([# string commands
+    'Defaultargument',
+    'Working'])
 binaryKeys = set([ # Binary Commands
     'Drop',
     'Elevation'])
@@ -76,6 +95,10 @@ otherKeys =set([ # others
 lbList = ['EXEC', 'LINK', 'INTERNAL', 'PYTHON'] # options for radio button type
 radioKeys = {
     'Type':lbList
+    }
+
+printNames = { # maping to be used to print names formatted
+    'Defaultargument':'Default Argument'
     }
 
 
