@@ -16,32 +16,20 @@ parseFileName = getFileName
 
 def get_random_string(length):
     letters = string.ascii_lowercase
-    result_str = ''.join(r.choice(letters) for i in range(length))
-    return result_str
+    return ''.join(r.choice(letters) for _ in range(length))
 
 def lt2d(a): # replace with b = dict(iter(a)), suspect
-    if a is dict:
-        return a
-    b = {}
-    for k in a:
-        b[k[0]] = k[1]
-    return b
+    return a if a is dict else {k[0]: k[1] for k in a}
 
 def lt2l(a):
-    b = []
-    for k in a:
-        b.append(k[0])
-    return b
+    return [k[0] for k in a]
 
 
 def str2bool(a): # converts strings that mean True to bool
     if type(a) is str:
         a = a.lower()
     true = ['true', 't', '1', 1, True, 'ok', 'yes']
-    if a in true:
-        return True
-    else:
-        return False
+    return a in true
 
 def decodeException():
     exc_type, exc_obj, exc_tb = sys.exc_info()

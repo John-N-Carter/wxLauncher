@@ -74,24 +74,19 @@ PER_ROW = 25
 #
 STATS = True
 #
-textKeys = set([# string commands
+textKeys = {
     'Command',
     'Icon',
     'Tab',
     'Name',
     'Defaultargument',
     'Working',
-    'Count'])
-plaintextKeys = set([# string commands
-    'Defaultargument',
-    'Working'])
-binaryKeys = set([ # Binary Commands
-    'Drop',
-    'Elevation'])
-otherKeys =set([ # others
-    'Worst',
-    'Colour',
-    'IconData'])
+    'Count',
+}
+
+plaintextKeys = {'Defaultargument', 'Working'}
+binaryKeys = {'Drop', 'Elevation'}
+otherKeys = {'Worst', 'Colour', 'IconData'}
 lbList = ['EXEC', 'LINK', 'INTERNAL', 'PYTHON'] # options for radio button type
 radioKeys = {
     'Type':lbList
