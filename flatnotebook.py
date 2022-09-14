@@ -851,11 +851,7 @@ def PaintStraightGradientBox(dc, rect, startColour, endColour, vertical=True):
     savedPen = dc.GetPen()
     savedBrush = dc.GetBrush()
 
-    if vertical:
-        high = rect.GetHeight()-1
-    else:
-        high = rect.GetWidth()-1
-
+    high = rect.GetHeight()-1 if vertical else rect.GetWidth()-1
     if high < 1:
         return
 
@@ -924,7 +920,7 @@ def DrawButton(dc, rect, focus, upperTabs):
 
     # Define the rounded rectangle base on the given rect
     # we need an array of 9 points for it
-    regPts = [wx.Point() for indx in range(9)]
+    regPts = [wx.Point() for _ in range(9)]
 
     if focus:
         if upperTabs:
@@ -941,10 +937,11 @@ def DrawButton(dc, rect, focus, upperTabs):
     top = wx.Rect(rect.GetTopLeft(), rightPt)
     bottom = wx.Rect(leftPt, rect.GetBottomRight())
 
-    topStartColour = wx.WHITE
-
-    if not focus:
-        topStartColour = LightColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE), 50)
+    topStartColour = (
+        wx.WHITE
+        if focus
+        else LightColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE), 50)
+    )
 
     topEndColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
     bottomStartColour = topEndColour
@@ -954,18 +951,15 @@ def DrawButton(dc, rect, focus, upperTabs):
     if upperTabs:
         if focus:
             PaintStraightGradientBox(dc, top, topStartColour, topEndColour)
-            PaintStraightGradientBox(dc, bottom, bottomStartColour, bottomEndColour)
         else:
             PaintStraightGradientBox(dc, top, topEndColour , topStartColour)
-            PaintStraightGradientBox(dc, bottom, bottomStartColour, bottomEndColour)
-
+        PaintStraightGradientBox(dc, bottom, bottomStartColour, bottomEndColour)
+    elif focus:
+        PaintStraightGradientBox(dc, bottom, topEndColour, bottomEndColour)
+        PaintStraightGradientBox(dc, top,topStartColour,  topStartColour)
     else:
-        if focus:
-            PaintStraightGradientBox(dc, bottom, topEndColour, bottomEndColour)
-            PaintStraightGradientBox(dc, top,topStartColour,  topStartColour)
-        else:
-            PaintStraightGradientBox(dc, bottom, bottomStartColour, bottomEndColour)
-            PaintStraightGradientBox(dc, top, topEndColour, topStartColour)
+        PaintStraightGradientBox(dc, bottom, bottomStartColour, bottomEndColour)
+        PaintStraightGradientBox(dc, top, topEndColour, topStartColour)
 
     dc.SetBrush(wx.TRANSPARENT_BRUSH)
 
@@ -1237,10 +1231,7 @@ class PageInfo(object):
 
         colour = FormatColour(colour)
 
-        if colour is None or not colour.IsOk():
-            self._pageTextColour = None
-        else:
-            self._pageTextColour = colour
+        self._pageTextColour = None if colour is None or not colour.IsOk() else colour
 
 
     def GetEnabled(self):
@@ -1491,11 +1482,7 @@ class TabNavigatorWindow(wx.Dialog):
         self._selectedItem = -1
         self._indexMap = []
 
-        if icon is None:
-            self._bmp = Mondrian.GetBitmap()
-        else:
-            self._bmp = icon
-
+        self._bmp = Mondrian.GetBitmap() if icon is None else icon
         sz = wx.BoxSizer(wx.VERTICAL)
 
         self._listBox = wx.ListBox(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(200, 150), [], wx.LB_SINGLE | wx.NO_BORDER)
@@ -1510,9 +1497,7 @@ class TabNavigatorWindow(wx.Dialog):
         panelHeight += 4 # Place a spacer of 2 pixels
 
         # Out signpost bitmap is 24 pixels
-        if panelHeight < 24:
-            panelHeight = 24
-
+        panelHeight = max(panelHeight, 24)
         self._panel = wx.Panel(self, wx.ID_ANY, wx.DefaultPosition, wx.Size(200, panelHeight))
 
         sz.Add(self._panel)
@@ -1568,19 +1553,11 @@ class TabNavigatorWindow(wx.Dialog):
         if event.GetDirection():
 
             # Select next page
-            if selected == maxItems - 1:
-                itemToSelect = 0
-            else:
-                itemToSelect = selected + 1
-
+            itemToSelect = 0 if selected == maxItems - 1 else selected + 1
         else:
 
             # Previous page
-            if selected == 0:
-                itemToSelect = maxItems - 1
-            else:
-                itemToSelect = selected - 1
-
+            itemToSelect = maxItems - 1 if selected == 0 else selected - 1
         self._listBox.SetSelection(itemToSelect)
 
 
@@ -1747,10 +1724,7 @@ class FNBRenderer(object):
         rect = pc.GetClientRect()
         clientWidth = rect.width
 
-        if agwStyle & FNB_NO_X_BUTTON:
-            return clientWidth - 38
-        else:
-            return clientWidth - 54
+        return clientWidth - 38 if agwStyle & FNB_NO_X_BUTTON else clientWidth - 54
 
 
     def GetRightButtonPos(self, pageContainer):
@@ -1765,10 +1739,7 @@ class FNBRenderer(object):
         rect = pc.GetClientRect()
         clientWidth = rect.width
 
-        if agwStyle & FNB_NO_X_BUTTON:
-            return clientWidth - 22
-        else:
-            return clientWidth - 38
+        return clientWidth - 22 if agwStyle & FNB_NO_X_BUTTON else clientWidth - 38
 
 
     def GetDropArrowButtonPos(self, pageContainer):
@@ -1793,10 +1764,7 @@ class FNBRenderer(object):
         rect = pc.GetClientRect()
         clientWidth = rect.width
 
-        if agwStyle & FNB_NO_X_BUTTON:
-            return clientWidth
-        else:
-            return clientWidth - 22
+        return clientWidth if agwStyle & FNB_NO_X_BUTTON else clientWidth - 22
 
 
     def GetButtonsAreaLength(self, pageContainer):
@@ -1810,25 +1778,25 @@ class FNBRenderer(object):
         agwStyle = pc.GetParent().GetAGWWindowStyleFlag()
 
         # ''
-        if agwStyle & FNB_NO_NAV_BUTTONS and agwStyle & FNB_NO_X_BUTTON and not agwStyle & FNB_DROPDOWN_TABS_LIST:
-            return 0
+        if agwStyle & FNB_NO_NAV_BUTTONS:
+            if (
+                agwStyle & FNB_NO_X_BUTTON
+                and not agwStyle & FNB_DROPDOWN_TABS_LIST
+            ):
+                return 0
 
-        # 'x'
-        elif agwStyle & FNB_NO_NAV_BUTTONS and not agwStyle & FNB_NO_X_BUTTON and not agwStyle & FNB_DROPDOWN_TABS_LIST:
-            return 22
+            elif (
+                not agwStyle & FNB_NO_X_BUTTON
+                and not agwStyle & FNB_DROPDOWN_TABS_LIST
+            ):
+                return 22
 
         # '<>'
         if not agwStyle & FNB_NO_NAV_BUTTONS and agwStyle & FNB_NO_X_BUTTON and not agwStyle & FNB_DROPDOWN_TABS_LIST:
             return 53 - 16
 
-        # 'vx'
-        if agwStyle & FNB_DROPDOWN_TABS_LIST and not agwStyle & FNB_NO_X_BUTTON:
-            return 22 + 16
-
-        # 'v'
-        if agwStyle & FNB_DROPDOWN_TABS_LIST and agwStyle & FNB_NO_X_BUTTON:
-            return 22
-
+        if agwStyle & FNB_DROPDOWN_TABS_LIST:
+            return 22 if agwStyle & FNB_NO_X_BUTTON else 22 + 16
         # '<>x'
         return 53
 
@@ -1864,9 +1832,12 @@ class FNBRenderer(object):
         if not pc._pagesInfoVec:
             return
 
-        if agwStyle & FNB_NAV_BUTTONS_WHEN_NEEDED:
-            if pc._pagesInfoVec[-1].GetPosition() != wx.Point(-1, -1) and pc._nFrom == 0:
-                return
+        if (
+            agwStyle & FNB_NAV_BUTTONS_WHEN_NEEDED
+            and pc._pagesInfoVec[-1].GetPosition() != wx.Point(-1, -1)
+            and pc._nFrom == 0
+        ):
+            return
 
         # Set the bitmap according to the button status
         if pc._nLeftButtonStatus == FNB_BTN_HOVER:
@@ -1908,9 +1879,12 @@ class FNBRenderer(object):
         if not pc._pagesInfoVec:
             return
 
-        if agwStyle & FNB_NAV_BUTTONS_WHEN_NEEDED:
-            if pc._pagesInfoVec[-1].GetPosition() != wx.Point(-1, -1) and pc._nFrom == 0:
-                return
+        if (
+            agwStyle & FNB_NAV_BUTTONS_WHEN_NEEDED
+            and pc._pagesInfoVec[-1].GetPosition() != wx.Point(-1, -1)
+            and pc._nFrom == 0
+        ):
+            return
 
         # Set the bitmap according to the button status
         if pc._nRightButtonStatus == FNB_BTN_HOVER:
@@ -2063,10 +2037,11 @@ class FNBRenderer(object):
         clientRect3 = wx.Rect(0, 0, clntRect.width, clntRect.height)
 
         if pc.HasAGWFlag(FNB_FF2):
-            if not pc.HasAGWFlag(FNB_BOTTOM):
-                fillColour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
-            else:
-                fillColour = wx.WHITE
+            fillColour = (
+                wx.WHITE
+                if pc.HasAGWFlag(FNB_BOTTOM)
+                else wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+            )
 
             dc.SetPen(wx.Pen(fillColour))
 
@@ -2153,19 +2128,13 @@ class FNBRenderer(object):
         width, pom = dc.GetTextExtent(pc.GetPageText(tabIdx))
 
         # Set a minimum size to a tab
-        if width < 20:
-            width = 20
-
+        width = max(width, 20)
         tabWidth = 2*pc._pParent.GetPadding() + width
 
         # Style to add a small 'x' button on the top right
         # of the tab
         if pc.HasAGWFlag(FNB_X_ON_TAB) and tabIdx == pc.GetSelection():
-            # The xpm image that contains the 'x' button is 9 pixels
-            spacer = 9
-            if pc.HasAGWFlag(FNB_VC8):
-                spacer = 4
-
+            spacer = 4 if pc.HasAGWFlag(FNB_VC8) else 9
             tabWidth += pc._pParent.GetPadding() + spacer
 
         if pc.IsDefaultTabs():
@@ -2174,14 +2143,12 @@ class FNBRenderer(object):
 
         hasImage = pc._ImageList != None and pc._pagesInfoVec[tabIdx].GetImageIndex() != -1
 
-        # For VC71 style, we only add the icon size (16 pixels)
         if hasImage:
-
-            if not pc.IsDefaultTabs():
-                tabWidth += 16 + pc._pParent.GetPadding()
-            else:
-                # Default style
-                tabWidth += 16 + pc._pParent.GetPadding() + shapePoints/2
+            tabWidth += (
+                16 + pc._pParent.GetPadding() + shapePoints / 2
+                if pc.IsDefaultTabs()
+                else 16 + pc._pParent.GetPadding()
+            )
 
         return tabWidth
 
@@ -2231,11 +2198,11 @@ class FNBRenderer(object):
         """
 
         pc = pageContainer
-        if "__WXMAC__" in wx.PlatformInfo:
-            # Works well on MSW & GTK, however this lines should be skipped on MAC
-            if not pc._pagesInfoVec or pc._nFrom >= len(pc._pagesInfoVec):
-                pc.Hide()
-                return
+        if "__WXMAC__" in wx.PlatformInfo and (
+            not pc._pagesInfoVec or pc._nFrom >= len(pc._pagesInfoVec)
+        ):
+            pc.Hide()
+            return
 
         # Get the text hight
         tabHeight = self.CalcTabHeight(pageContainer)
@@ -2493,13 +2460,12 @@ class FNBRendererMgr(object):
 
         # register renderers
 
-        self._renderers = {}
-        self._renderers.update({-1: FNBRendererDefault()})
-        self._renderers.update({FNB_VC71: FNBRendererVC71()})
-        self._renderers.update({FNB_FANCY_TABS: FNBRendererFancy()})
-        self._renderers.update({FNB_VC8: FNBRendererVC8()})
-        self._renderers.update({FNB_RIBBON_TABS: FNBRendererRibbonTabs()})
-        self._renderers.update({FNB_FF2: FNBRendererFirefox2()})
+        self._renderers = {-1: FNBRendererDefault()}
+        self._renderers[FNB_VC71] = FNBRendererVC71()
+        self._renderers[FNB_FANCY_TABS] = FNBRendererFancy()
+        self._renderers[FNB_VC8] = FNBRendererVC8()
+        self._renderers[FNB_RIBBON_TABS] = FNBRendererRibbonTabs()
+        self._renderers[FNB_FF2] = FNBRendererFirefox2()
 
 
     def GetRenderer(self, style):
@@ -2572,7 +2538,7 @@ class FNBRendererDefault(FNBRenderer):
         borderPen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
         pc = pageContainer
 
-        tabPoints = [wx.Point() for ii in range(7)]
+        tabPoints = [wx.Point() for _ in range(7)]
         tabPoints[0].x = posx
         tabPoints[0].y = (pc.HasAGWFlag(FNB_BOTTOM) and [2] or [tabHeight - 2])[0]
 
@@ -2599,16 +2565,14 @@ class FNBRendererDefault(FNBRenderer):
             # Draw the tab as rounded rectangle
             dc.DrawPolygon(tabPoints)
 
-        else:
+        elif tabIdx != pc.GetSelection() - 1:
 
-            if tabIdx != pc.GetSelection() - 1:
-
-                # Draw a vertical line to the right of the text
-                pt1x = tabPoints[5].x
-                pt1y = (pc.HasAGWFlag(FNB_BOTTOM) and [4] or [tabHeight - 6])[0]
-                pt2x = tabPoints[5].x
-                pt2y = (pc.HasAGWFlag(FNB_BOTTOM) and [tabHeight - 4] or [4])[0]
-                dc.DrawLine(pt1x, pt1y, pt2x, pt2y)
+            # Draw a vertical line to the right of the text
+            pt1x = tabPoints[5].x
+            pt1y = (pc.HasAGWFlag(FNB_BOTTOM) and [4] or [tabHeight - 6])[0]
+            pt2x = tabPoints[5].x
+            pt2y = (pc.HasAGWFlag(FNB_BOTTOM) and [tabHeight - 4] or [4])[0]
+            dc.DrawLine(pt1x, pt1y, pt2x, pt2y)
 
         if tabIdx == pc.GetSelection():
 
@@ -2706,7 +2670,7 @@ class FNBRendererFirefox2(FNBRenderer):
         borderPen = wx.Pen(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNSHADOW))
         pc = pageContainer
 
-        tabPoints = [wx.Point() for indx in range(7)]
+        tabPoints = [wx.Point() for _ in range(7)]
         tabPoints[0].x = posx + 2
         tabPoints[0].y = (pc.HasAGWFlag(FNB_BOTTOM) and [2] or [tabHeight - 2])[0]
 
@@ -3057,11 +3021,11 @@ class FNBRendererVC8(FNBRenderer):
 
         pc = pageContainer
 
-        if "__WXMAC__" in wx.PlatformInfo:
-            # Works well on MSW & GTK, however this lines should be skipped on MAC
-            if not pc._pagesInfoVec or pc._nFrom >= len(pc._pagesInfoVec):
-                pc.Hide()
-                return
+        if "__WXMAC__" in wx.PlatformInfo and (
+            not pc._pagesInfoVec or pc._nFrom >= len(pc._pagesInfoVec)
+        ):
+            pc.Hide()
+            return
 
         # Get the text hight
         tabHeight = self.CalcTabHeight(pageContainer)
@@ -3215,7 +3179,7 @@ class FNBRendererVC8(FNBRenderer):
 
         pc = pageContainer
         borderPen = wx.Pen(pc._pParent.GetBorderColour())
-        tabPoints = [wx.Point() for ii in range(8)]
+        tabPoints = [wx.Point() for _ in range(8)]
 
         # If we draw the first tab or the active tab,
         # we draw a full tab, else we draw a truncated tab
@@ -3411,10 +3375,8 @@ class FNBRendererVC8(FNBRenderer):
                 if y > tabPoints[0].y + size:
                     break
 
-            else:
-
-                if y < tabPoints[0].y - size:
-                    break
+            elif y < tabPoints[0].y - size:
+                break
 
             currCol = wx.Colour(col1.Red() + int(rf), col1.Green() + int(gf), col1.Blue() + int(bf))
 
@@ -3434,10 +3396,7 @@ class FNBRendererVC8(FNBRenderer):
             gf += gstep
             bf += bstep
 
-            if pc.HasAGWFlag(FNB_BOTTOM):
-                y = y + 1
-            else:
-                y = y - 1
+            y = y + 1 if pc.HasAGWFlag(FNB_BOTTOM) else y - 1
 
 
     def GetStartX(self, tabPoints, y, style):
@@ -3456,9 +3415,8 @@ class FNBRendererVC8(FNBRenderer):
         bBottomStyle = (style & FNB_BOTTOM and [True] or [False])[0]
         match = False
 
-        if bBottomStyle:
-
-            for i in range(3):
+        for i in range(3):
+            if bBottomStyle:
 
                 if y >= tabPoints[i].y and y < tabPoints[i+1].y:
 
@@ -3469,18 +3427,14 @@ class FNBRendererVC8(FNBRenderer):
                     match = True
                     break
 
-        else:
+            elif y <= tabPoints[i].y and y > tabPoints[i+1].y:
 
-            for i in range(3):
-
-                if y <= tabPoints[i].y and y > tabPoints[i+1].y:
-
-                    x1 = tabPoints[i].x
-                    x2 = tabPoints[i+1].x
-                    y1 = tabPoints[i].y
-                    y2 = tabPoints[i+1].y
-                    match = True
-                    break
+                x1 = tabPoints[i].x
+                x2 = tabPoints[i+1].x
+                y1 = tabPoints[i].y
+                y2 = tabPoints[i+1].y
+                match = True
+                break
 
         if not match:
             return tabPoints[2].x
@@ -3520,9 +3474,8 @@ class FNBRendererVC8(FNBRenderer):
         bBottomStyle = (style & FNB_BOTTOM and [True] or [False])[0]
         match = False
 
-        if bBottomStyle:
-
-            for i in range(7, 3, -1):
+        for i in range(7, 3, -1):
+            if bBottomStyle:
 
                 if y >= tabPoints[i].y and y < tabPoints[i-1].y:
 
@@ -3533,18 +3486,14 @@ class FNBRendererVC8(FNBRenderer):
                     match = True
                     break
 
-        else:
+            elif y <= tabPoints[i].y and y > tabPoints[i-1].y:
 
-            for i in range(7, 3, -1):
-
-                if y <= tabPoints[i].y and y > tabPoints[i-1].y:
-
-                    x1 = tabPoints[i].x
-                    x2 = tabPoints[i-1].x
-                    y1 = tabPoints[i].y
-                    y2 = tabPoints[i-1].y
-                    match = True
-                    break
+                x1 = tabPoints[i].x
+                x2 = tabPoints[i-1].x
+                y1 = tabPoints[i].y
+                y2 = tabPoints[i-1].y
+                match = True
+                break
 
         if not match:
             return tabPoints[3].x

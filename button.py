@@ -173,10 +173,7 @@ class Tab:
             button = self.Buttons[i]
             button.Position = i
             if master.Score:
-                if button.Count > 10:
-                    cnt = '>10'
-                else:
-                    cnt = str(button.Count)
+                cnt = '>10' if button.Count > 10 else str(button.Count)
                 self.iconName[i].SetLabel(f'{button.Name} [{cnt}]')
             else:
                 self.iconName[i].SetLabel(f'{button.Name}')
@@ -196,8 +193,7 @@ class Tab:
             self.iconImage[i].Hide()
     def Show(self):
         n = len(self.Buttons)
-        if n > CONST.PER_ROW:
-            n = CONST.PER_ROW
+        n = min(n, CONST.PER_ROW)
         for i in range(n):
             self.iconName[i].Show()
             self.iconImage[i].Show()

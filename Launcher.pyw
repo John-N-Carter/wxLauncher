@@ -104,9 +104,7 @@ from getWindowTitles import getWindows
 
 
 def test_icon(h, f):
-    if h.startswith(b'\x00\x00\x01\x00'):
-        return 'icon'
-    return None
+    return 'icon' if h.startswith(b'\x00\x00\x01\x00') else None
 
 imghdr.tests.append(test_icon) # this runs first to register windows icons.
 
@@ -285,9 +283,7 @@ class EditCommandDialog(wx.Dialog):
         radioResult, commandResult, flagResult, countResult, textResult = [None] * 5
         Result = {}
         # command strings, GetValue
-        commandResult = []
-        for i in range(self.NumStrings):
-            commandResult.append(self.ButtonData[i].GetValue())
+        commandResult = [self.ButtonData[i].GetValue() for i in range(self.NumStrings)]
         Result[CONST.COMMAND] = commandResult
         # type, getselection -> int, getstring
         radioResult = self.radiobox.GetSelection()
@@ -311,8 +307,7 @@ class EditCommandDialog(wx.Dialog):
         self.Master.SetFocus()
 
     def Lines(self, a):
-        lines = int(self.Button.Lines)
-        lines += 1
+        lines = int(self.Button.Lines) + 1
         self.Button.Lines = str(lines)
         self.Master.Result = True
         self.Destroy()
@@ -797,8 +792,8 @@ class EmptyTabPanel(wx.Panel):
         self.Bind(wx.EVT_CONTEXT_MENU, Command(self.Master.TabContextMenu, None, Tab = self.Tab.Name), self)
         self.NotebookTabSizer = wx.GridBagSizer(hgap = 10)
         IconData = self.Master.IconData
+        j = 0
         for i in range(CONST.PER_ROW):  # buttons in tabs
-            j = 0
             k = i
             box = buttons.GenBitmapButton(self, -1, IconData, style = wx.BORDER_NONE)
             text = wx.StaticText(self, -1, str(i), style = wx.BORDER_NONE | wx.ST_ELLIPSIZE_END)
@@ -834,8 +829,6 @@ class MyFrame2(wx.Frame): # what do empty tabs looklike
             tabName =  self.Master.AllTabs[t].Name # long way making it clear
             if 'System' in t:
                 continue
-            else:
-                pass
             atab = wx.Panel(self.tabControl) # Use Panel not frame
             atab.SetBackgroundColour('black')
             self.tabControl.AddPage(atab, tabName)
@@ -853,14 +846,12 @@ class MyFrame2(wx.Frame): # what do empty tabs looklike
             self.Hide()
             self.other = MyFrame(self.Master, NAME_STRING, (CONST.myPosition, 0))
             self.other.other = self # ?
-            self.other.Layout()
-            self.other.Show()
         else:
             self.Hide()
             pa = self.tabControl.GetSelection()
             self.other.tabControl.SetSelection(pa)
-            self.other.Layout()
-            self.other.Show()
+        self.other.Layout()
+        self.other.Show()
         self.RebuildFlag = False
 
 class MyFrame(wx.Frame):
@@ -895,7 +886,7 @@ class MyFrame(wx.Frame):
         self.MakePanel()
 
     def GenerateColours(self):
-        for i in range(40):
+        for _ in range(40):
             col = fnb.RandomColour()
             self.TabColours.append(col)
 
@@ -921,7 +912,6 @@ class MyFrame(wx.Frame):
 
     def TabProperties(self, a, thisTab): # To be a setconfig  of tab or program
         tabProp = TabPropDialog(self, thisTab)
-        pass
 
     def setup(self, notebook = None): # protect againist bad section
         fp = open(CONST.FULL_INI_PATH, 'r')
@@ -1029,8 +1019,7 @@ class MyFrame(wx.Frame):
             tab.Populate(self)
 
     def Test(self, a):
-        for i, info in enumerate(self.tabControl._pages._pagesInfoVec):
-            pass
+        pass
 
     def SetGui(self):
         for pageindex, tab in enumerate(self.AllTabs.values()): # export labels and sort, t is an instance of  Tab
@@ -1107,10 +1096,7 @@ class MyFrame(wx.Frame):
         if wx.TheClipboard.Open():
             success = wx.TheClipboard.GetData(fileData)
             wx.TheClipboard.Close()
-        if success:
-            listFiles = fileData.GetFilenames()
-        else:
-            listFiles = [None]
+        listFiles = fileData.GetFilenames() if success else [None]
         for fn in listFiles:
             self.NewButton(a, tab = tab, filename = fn)
 
@@ -1451,14 +1437,13 @@ class MyFrame(wx.Frame):
         oldTabName = button.Tab
         box =NewTabDialog(self, button)
         result = box.ShowModal()
-        button.Section = CODE.get_random_string(5) + '.' + button.Name
+        button.Section = f'{CODE.get_random_string(5)}.{button.Name}'
         newTab = self.AllTabs[button.Tab]
         newTab.addButton(button)
         newTab.Hide()
         newTab.Populate(self)
         newTab.Show()
-        self.config[button.Section] = {}
-        self.config[button.Section]['name'] = button.Name
+        self.config[button.Section] = {'name': button.Name}
         self.EditConfig(button, button.Section) # section name does not reflect new tab
         self.Edited = True
 
@@ -1591,10 +1576,7 @@ class MyFrame(wx.Frame):
             return
 
     def SetVanish(self, a): # a is event rubish
-        if self.DoVanish:
-            self.DoVanish = False
-        else:
-            self.DoVanish = True
+        self.DoVanish = not self.DoVanish
 
     def Vanish(self, a):
         if self.DoVanish:
@@ -1714,10 +1696,7 @@ class MyFrame(wx.Frame):
         if wx.TheClipboard.Open():
             success = wx.TheClipboard.GetData(fileData)
             wx.TheClipboard.Close()
-        if success:
-            listFiles = fileData.GetFilenames()
-        else:
-            listFiles = []
+        listFiles = fileData.GetFilenames() if success else []
         prog = copy.deepcopy( button.Command)
         self.RunAllCom(button, prog, parameters = listFiles)
 
